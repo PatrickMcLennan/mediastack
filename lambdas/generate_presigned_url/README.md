@@ -1,16 +1,23 @@
-# widescreen_wallpapers
+# generate_presigned_url
 
-Makes http call to front page of subreddit and returns list of `name` + `url` of each post that is neither promoted or nsfw.
+Generates a presigned-url for PUT operations on an S3 bucket.
+
+Example request:
+
+```json
+{
+  "image_name": "new image name",
+  "bucket_name": "existing bucket name"
+}
+```
 
 Example output:
 
 ```json
 {
-  "status_code": 200,
-  "body": [
-    { "name": "new image 1 name", "url": "new image 1 url" },
-    { "name": "new image 2 name", "url": "new image 2 url" }
-  ]
+  "status_code": 201,
+  "message": "Created",
+  "url": "https://new_presigned_url.com"
 }
 ```
 
@@ -20,12 +27,13 @@ Example output:
 
 ### You need
 
-- [cross](https://github.com/rust-embedded/cross)
-- rustup target [`x86_64-unknown-linux-gnu`](https://rust-lang.github.io/rustup/cross-compilation.html)
+- [Docker](https://www.docker.com/)
 
 ### Commands
 
-- `cross build --target x86_64-unknown-linux-gnu --release`
+- ```bash
+  docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust sh -c "RUST_BACKTRACE=1 && rustup target add x86_64-unknown-linux-gnu && cargo build --target x86_64-unknown-linux-gnu --release";
+  ```
 
 Compile a production executable called `bootstrap` into `target/x86_64-unknown-linux-gnu/release`.
 
@@ -56,7 +64,7 @@ Create a `.zip` of `bootstrap` to deploy to AWS
   --endpoint http://localhost:9001 \
   --no-sign-request --function-name=rust_lambda \
   --invocation-type=RequestResponse \
-  --payload $(echo '{}' | base64 ) \
+  --payload $(echo '{ image_name: "new image name", bucket_name: "existing bucket name" }' | base64 ) \
   test.json
   ```
   - Invokes the lambda, prints the output to `test.json` file.

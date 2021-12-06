@@ -1,0 +1,17 @@
+[package]
+name = "generate_presigned_url"
+version = "0.1.0"
+edition = "2021"
+autobins = false
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+lambda_runtime = "0.3.0"
+serde_json = "1.0.64"
+serde = "1.0.126"
+aws-config = "0.2.0"
+aws-sdk-s3 = "0.2.0"

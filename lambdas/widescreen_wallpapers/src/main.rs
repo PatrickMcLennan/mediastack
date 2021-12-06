@@ -15,8 +15,8 @@ struct Post {
 
 #[derive(Serialize, Deserialize)]
 struct Output {
-  status_code: i32,
-  body: Vec<Post>,
+    status_code: i32,
+    body: Vec<Post>,
 }
 
 async fn handler(_: Event, __: Context) -> Result<Output, Error> {
@@ -50,11 +50,11 @@ async fn handler(_: Event, __: Context) -> Result<Output, Error> {
 
         let url = match post.value().attr("data-url") {
             Some(url) => {
-              if !url.contains("jpg") && !url.contains("jpeg") && !url.contains("png") {
-                continue;
-              } else {
-                url
-              }
+                if !url.contains("jpg") && !url.contains("jpeg") && !url.contains("png") {
+                    continue;
+                } else {
+                    url
+                }
             },
             None => continue,
         };
