@@ -1,7 +1,14 @@
-*.js
-!jest.config.js
+# TypeScript artifacts
+!webpack.*.js
 *.d.ts
 node_modules
+stack.js
+
+# Lambda artifacts + development
+/target/**/*
+lambdas/**/target/
+bootstrap.zip
+test.json
 
 # CDK asset staging directory
 .cdk.staging

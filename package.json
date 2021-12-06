@@ -5,23 +5,36 @@
     "aws": "bin/aws.js"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
-    "cdk": "cdk"
+    "build:dev": "webpack --config ./webpack.dev.js",
+    "build:prod": "webpack --config ./webpack.prod.js"
   },
   "devDependencies": {
     "@aws-cdk/assert": "1.122.0",
+    "@aws-cdk/aws-apigateway": "^1.134.0",
+    "@aws-cdk/aws-lambda": "^1.134.0",
+    "@aws-cdk/core": "^1.134.0",
+    "@swc/cli": "^0.1.52",
+    "@swc/core": "^1.2.118",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
+    "@typescript-eslint/eslint-plugin": "^5.5.0",
+    "@typescript-eslint/parser": "^5.5.0",
+    "aws-cdk": "^2.0.0",
+    "clean-webpack-plugin": "^4.0.0",
+    "eslint": "^8.4.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "fork-ts-checker-webpack-plugin": "^6.5.0",
     "jest": "^26.4.2",
+    "prettier": "^2.5.1",
+    "swc-loader": "^0.1.15",
     "ts-jest": "^26.2.0",
-    "aws-cdk": "1.122.0",
     "ts-node": "^9.0.0",
-    "typescript": "~3.9.7"
+    "typescript": "~3.9.7",
+    "webpack": "^5.64.4",
+    "webpack-bundle-analyzer": "^4.5.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-merge": "^5.8.0",
+    "webpack-node-externals": "^3.0.0"
   },
-  "dependencies": {
-    "@aws-cdk/core": "1.122.0",
-    "source-map-support": "^0.5.16"
-  }
+  "dependencies": {}
 }
