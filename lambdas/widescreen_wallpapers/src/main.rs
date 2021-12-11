@@ -1,100 +1,79 @@
-extern crate prettytable;
-use prettytable::{color, Attr, Cell, Row, Table};
-use scraper::{Html, Selector};
+mod lib;
+
+use crate::lib::{Output, Event, Post, get_posts};
+
+use aws_config::meta::region::RegionProviderChain;
+use aws_sdk_dynamodb::{Client, Region};
+use aws_sdk_dynamodb::model::AttributeValue;
 use lambda_runtime::{Context, Error};
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize)]
-struct Event {}
-
-#[derive(Serialize, Deserialize)]
-struct Post {
-    name: String,
-    url: String,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Output {
-    status_code: i32,
-    body: Vec<Post>,
-}
+use std::time::{SystemTime};
 
 async fn handler(_: Event, __: Context) -> Result<Output, Error> {
-    let resp = reqwest::get("https://old.reddit.com/r/widescreenwallpaper")
-        .await?
-        .text()
-        .await?;
+    const TABLE_NAME: &str = "aws-dynamo-media";
+    let region_provider = RegionProviderChain::first_try("us-east-1")
+        .or_default_provider()
+        .or_else(Region::new("us-east-1"));
+    let shared_config = aws_config::from_env().region(region_provider).load().await;
+    let client = Client::new(&shared_config);
+    let posts = get_posts().await;
 
-    let document = Html::parse_document(&resp);
-    let post_selector = Selector::parse("div.thing").unwrap();
-
-    let mut posts: Vec<Post> = vec![];
-    for post in document.select(&post_selector) {
-        match post.value().attr("data-nsfw") {
-            Some(nsfw) => {
-                if nsfw == "true" {
-                    continue;
-                }
-            }
-            None => continue,
-        };
-
-        match post.value().attr("data-promoted") {
-            Some(promoted) => {
-                if promoted == "true" {
-                    continue;
-                }
-            }
-            None => continue,
-        };
-
-        let url = match post.value().attr("data-url") {
-            Some(url) => {
-                if !url.contains("jpg") && !url.contains("jpeg") && !url.contains("png") {
-                    continue;
-                } else {
-                    url
-                }
-            },
-            None => continue,
-        };
-
-        let name_split: Vec<&str> = url.split(".").collect();
-        let name = name_split[name_split.len() - 2].replace("it/", "");
-        let ext_split: Vec<&str> = url.split("/").collect();
-        let ext = ext_split[ext_split.len() - 1];
-
-        posts.push(Post { name: format!("{}.{}", name, ext), url: String::from(url) })
+    let mut new_posts: Vec<Post> = vec![];
+    for pk in posts {
+        match client
+            .query()
+            .table_name(TABLE_NAME)
+            .key_condition_expression("#sk = :sk and #pk = :pk")
+            .expression_attribute_names("#sk", "sk")
+            .expression_attribute_names("#pk", "pk")
+            .expression_attribute_values(":sk", AttributeValue::S(format!("WidescreenWallpaper|{}", pk.name.to_string())))
+            .expression_attribute_values(":pk", AttributeValue::S(pk.name.to_string()))
+            .send()
+            .await {
+				Ok(s) => {
+					println!("{:?}", s);
+					if s.count >= 1 {
+						continue
+					} else {
+						new_posts.push(pk)
+					}
+				},
+				Err(_) => {
+					println!("There's an error reading from DynamoDB right now: {:?}", pk.name);
+				}
+			}
     }
 
-    // Pretty-print a table of results to stdout 
-    let mut table = Table::new();
-    table.add_row(Row::new(vec![
-        Cell::new("Name")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::GREEN)),
-        Cell::new("Url")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::GREEN)),
-    ]));
+    let time_stamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(v) => v.as_secs(),
+        Err(_) => 0
+    };
 
-    for post in &posts {
-        table.add_row(Row::new(vec![
-            Cell::new(&post.name).with_style(Attr::Italic(true)),
-            Cell::new(&post.url).with_style(Attr::Italic(true)),
-        ]));
+    for post in &new_posts {
+        client
+            .put_item()
+            .table_name(TABLE_NAME)
+            .item("created_at", AttributeValue::N(time_stamp.to_string()))
+            .item("in_s3", AttributeValue::Bool(false))
+            .item("name", AttributeValue::S(post.name.clone()))
+            .item("pk", AttributeValue::S(post.name.clone()))
+            .item("sk", AttributeValue::S(format!("WidescreenWallpaper|{}", post.name)))
+            .item("updated_at", AttributeValue::N(time_stamp.to_string()))
+            .item("url", AttributeValue::S(post.url.clone()))
+            .send()
+            .await
+            .expect("Unable to set item in Dynamo");
     }
 
-    table.printstd();
     Ok(Output {
-      status_code: 200,
-      body: posts
+        status_code: 200,
+        images: new_posts,
+        message: format!("New images found")
     })
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-  let handler = lambda_runtime::handler_fn(handler);
-  lambda_runtime::run(handler).await?; 
-  Ok(())
+    let handler = lambda_runtime::handler_fn(handler);
+    lambda_runtime::run(handler).await?; 
+    Ok(())
 }

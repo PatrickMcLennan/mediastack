@@ -1,8 +1,8 @@
 # widescreen_wallpapers
 
-Makes http call to front page of subreddit and returns list of `name` + `url` of each post that is neither promoted or nsfw.
+Makes HTTP call to front page of subreddit and returns list of `name` + `url` of each post that is neither promoted or nsfw. Checks a DynamoDB table for known images and adds any new post to the table as well.
 
-Example output:
+Example HTTP Response:
 
 ```json
 {
@@ -11,6 +11,34 @@ Example output:
     { "name": "new image 1 name", "url": "new image 1 url" },
     { "name": "new image 2 name", "url": "new image 2 url" }
   ]
+}
+```
+
+Example DynamoDB record:
+
+```json
+{
+  "created_at": {
+    "N": 1638897941134
+  },
+  "in_s3": {
+    "B": false
+  },
+  "name": {
+    "S": "new image 1 name"
+  },
+  "pk": {
+    "S": "new image 1 name"
+  },
+  "sk": {
+    "S": "WidescreenWallpaper|new image 1 name"
+  },
+  "updated_at": {
+    "N": 1638897941134
+  },
+  "url": {
+    "S": "new image 1 url"
+  }
 }
 ```
 
