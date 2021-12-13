@@ -9,7 +9,7 @@ use lambda_runtime::{Context, Error};
 use std::time::{SystemTime};
 
 async fn handler(_: Event, __: Context) -> Result<Output, Error> {
-    const TABLE_NAME: &str = "aws-dynamo-media";
+    const TABLE_NAME: &str = "media-dynamo";
     let region_provider = RegionProviderChain::first_try("us-east-1")
         .or_default_provider()
         .or_else(Region::new("us-east-1"));
@@ -22,7 +22,7 @@ async fn handler(_: Event, __: Context) -> Result<Output, Error> {
         match client
             .query()
             .table_name(TABLE_NAME)
-            .key_condition_expression("#sk = :sk and #pk = :pk")
+            .key_condition_expression("#pk = :pk and #sk = :sk")
             .expression_attribute_names("#sk", "sk")
             .expression_attribute_names("#pk", "pk")
             .expression_attribute_values(":sk", AttributeValue::S(format!("WidescreenWallpaper|{}", pk.name.to_string())))
@@ -30,7 +30,6 @@ async fn handler(_: Event, __: Context) -> Result<Output, Error> {
             .send()
             .await {
 				Ok(s) => {
-					println!("{:?}", s);
 					if s.count >= 1 {
 						continue
 					} else {
@@ -49,19 +48,25 @@ async fn handler(_: Event, __: Context) -> Result<Output, Error> {
     };
 
     for post in &new_posts {
-        client
+        match client
             .put_item()
             .table_name(TABLE_NAME)
             .item("created_at", AttributeValue::N(time_stamp.to_string()))
-            .item("in_s3", AttributeValue::Bool(false))
             .item("name", AttributeValue::S(post.name.clone()))
             .item("pk", AttributeValue::S(post.name.clone()))
             .item("sk", AttributeValue::S(format!("WidescreenWallpaper|{}", post.name)))
             .item("updated_at", AttributeValue::N(time_stamp.to_string()))
+            .item("media_type", AttributeValue::S("image".to_string()))
             .item("url", AttributeValue::S(post.url.clone()))
             .send()
-            .await
-            .expect("Unable to set item in Dynamo");
+            .await {
+				Ok(_) => continue,
+				Err(e) => {
+					println!("Unable to write this item: {:?}, {:?}", post.name, post.url);
+					println!("{}", e);
+					continue
+				}
+			};
     }
 
     Ok(Output {
