@@ -7,7 +7,7 @@ use aws_sdk_s3::{ByteStream, Client, Region};
 use futures_util::StreamExt;
 use lambda_runtime::{Context, Error};
 use aws_sdk_s3::model::{CompletedMultipartUpload, CompletedPart};
-use bytes::{BytesMut, BufMut};
+use bytes::{BytesMut};
 
 async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 	let messages = match event.Records {
@@ -91,43 +91,42 @@ async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 
 	let mut part_number: i32 = 1;
 	let mut parts: Vec<CompletedPart> = vec![];
-	let mut buffer = BytesMut::with_capacity(5000000);
-
-	// TODO
-
-	// Return to this.  MultiPartUpload has a 5mb minimum, 
-	// need to store the stream in a buffer and only trigger 
-	// the upload_part() method when the buffer is larger than that.
+	let mut buffer = BytesMut::with_capacity(10000000);
 
 	while let Some(item) = stream.next().await {
 		match item {
 			Ok(v) => {
-				part_number += 1;
-				match s3_client
-					.upload_part()
-					.bucket("media-s3-patrick")
-					.key(name)
-					.upload_id(&upload_id)
-					.part_number(part_number)
-					.body(ByteStream::from(v))
-					.send()
-					.await {
-						Ok(v) => {
-							let e_tag = match v.e_tag {
-								Some(e) => e,
-								None => {
-									println!("No e_tag for {}", part_number);
-									std::process::exit(1)		
-								}
-							};
-							let new_part = CompletedPart::builder().e_tag(e_tag).part_number(part_number).build();
-							parts.push(new_part)
-						},
-						Err(e) => {
-							println!("Could not upload_part: {}", e);
-							std::process::exit(1)
-						}
-					};
+				buffer.extend_from_slice(&v);
+				let new_buffer_len = buffer.len();
+				if new_buffer_len > 5000000 {
+					part_number += 1;
+					match s3_client
+						.upload_part()
+						.bucket("media-s3-patrick")
+						.key(name)
+						.upload_id(&upload_id)
+						.part_number(part_number)
+						.body(ByteStream::from(bytes::Bytes::from(buffer.clone())))
+						.send()
+						.await {
+							Ok(v) => {
+								let e_tag = match v.e_tag {
+									Some(e) => e,
+									None => {
+										println!("No e_tag for {}", part_number);
+										std::process::exit(1)		
+									}
+								};
+								let new_part = CompletedPart::builder().e_tag(e_tag).part_number(part_number).build();
+								buffer.clear();
+								parts.push(new_part)
+							},
+							Err(e) => {
+								println!("Could not upload_part: {}", e);
+								std::process::exit(1)
+							}
+						};
+				}
 			},
 			Err(e) => {
 				println!("Error adding to the multipart upload: {}", e);
@@ -148,6 +147,33 @@ async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 			}
 		}
     }
+
+	part_number += 1;
+	match s3_client
+		.upload_part()
+		.bucket("media-s3-patrick")
+		.key(name)
+		.upload_id(&upload_id)
+		.part_number(part_number)
+		.body(ByteStream::from(bytes::Bytes::from(buffer)))
+		.send()
+		.await {
+			Ok(v) => {
+				let e_tag = match v.e_tag {
+					Some(e) => e,
+					None => {
+						println!("No e_tag for {}", part_number);
+						std::process::exit(1)		
+					}
+				};
+				let new_part = CompletedPart::builder().e_tag(e_tag).part_number(part_number).build();
+				parts.push(new_part)
+			},
+			Err(e) => {
+				println!("Could not upload_part: {}", e);
+				std::process::exit(1)
+			}
+		};
 
 	let completed_upload = CompletedMultipartUpload::builder().set_parts(Some(parts)).build();
 	match s3_client

@@ -47,7 +47,6 @@ async fn handler(event: Request, __: Context) -> Result<(), Error> {
     let shared_config = aws_config::from_env().region(region_provider).load().await;
 	let client = Client::new(&shared_config);
 
-
 	let queue = match client
 		.get_queue_url()
 		.queue_name("media-sqs")
@@ -70,7 +69,7 @@ async fn handler(event: Request, __: Context) -> Result<(), Error> {
 		let string = match serde_json::to_string(&image) {
 			Ok(v) => v,
 			Err(e) => { 
-				println!("{:?}", e);
+				println!("Can't create string for this: {:?}", e);
 				continue
 			}
 		};

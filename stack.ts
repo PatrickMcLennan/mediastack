@@ -43,18 +43,18 @@ class MediaStack extends cdk.Stack {
       })
     );
 
-    // const downloadImageToS3 = new lambda.Function(this, `DownloadImageToS3`, {
-    //   handler: `main`,
-    //   runtime: lambda.Runtime.PROVIDED_AL2,
-    //   code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/download_image_to_s3/bootstrap.zip`)),
-    //   functionName: `DownloadImageToS3`,
-    //   timeout: cdk.Duration.seconds(500),
-    // });
-    // downloadImageToS3.addEventSource(
-    //   new SqsEventSource(queue, {
-    //     batchSize: 1,
-    //   })
-    // );
+    const downloadImageToS3 = new lambda.Function(this, `DownloadImageToS3`, {
+      handler: `main`,
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/download_image_to_s3/bootstrap.zip`)),
+      functionName: `DownloadImageToS3`,
+      timeout: cdk.Duration.seconds(500),
+    });
+    downloadImageToS3.addEventSource(
+      new SqsEventSource(queue, {
+        batchSize: 1,
+      })
+    );
 
     const writeWidescreenWallpapersToDynamo = new lambda.Function(this, `WriteWidescreenWallpapersToDynamo`, {
       handler: `main`,
@@ -66,9 +66,8 @@ class MediaStack extends cdk.Stack {
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);
     queue.grantSendMessages(addImageDownloadToQueue);
-    queue.grantConsumeMessages(addImageDownloadToQueue);
-    // queue.grantConsumeMessages(downloadImageToS3);
-    // bucket.grantWrite(downloadImageToS3);
+    queue.grantConsumeMessages(downloadImageToS3);
+    bucket.grantWrite(downloadImageToS3);
   }
 }
 
