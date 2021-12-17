@@ -4,11 +4,18 @@ import * as s3 from '@aws-cdk/aws-s3';
 import * as dynamo from '@aws-cdk/aws-dynamodb';
 import * as path from 'path';
 import * as sqs from '@aws-cdk/aws-sqs';
+import * as events from '@aws-cdk/aws-events';
+import * as targets from '@aws-cdk/aws-events-targets';
 import { DynamoEventSource, SqsEventSource } from '@aws-cdk/aws-lambda-event-sources';
 
 class MediaStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // CRON
+    const every6Hours = new events.Rule(this, 'Every6Hours', {
+      schedule: events.Schedule.expression('cron(0 0/6 * * * *)'),
+    });
 
     // DynamoDB
     const table = new dynamo.Table(this, `media-dynamo`, {
@@ -62,6 +69,7 @@ class MediaStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/widescreen_wallpapers/bootstrap.zip`)),
       functionName: `WriteWidescreenWallpapersToDynamo`,
     });
+    every6Hours.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
 
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);
