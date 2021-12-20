@@ -12,9 +12,9 @@ class MediaStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // CRON
-    const every6Hours = new events.Rule(this, 'Every6Hours', {
-      schedule: events.Schedule.expression('cron(0 0/6 * * * *)'),
+    // Cron
+    const midnightCronJob = new events.Rule(this, 'MidnightCronJob', {
+      schedule: events.Schedule.cron({ minute: `0`, hour: `0` }),
     });
 
     // DynamoDB
@@ -69,7 +69,7 @@ class MediaStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/widescreen_wallpapers/bootstrap.zip`)),
       functionName: `WriteWidescreenWallpapersToDynamo`,
     });
-    every6Hours.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
+    midnightCronJob.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
 
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);

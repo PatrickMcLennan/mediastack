@@ -1,18 +1,6 @@
 # widescreen_wallpapers
 
-Makes HTTP call to front page of subreddit and returns list of `name` + `url` of each post that is neither promoted or nsfw. Checks a DynamoDB table for known images and adds any new post to the table as well.
-
-Example HTTP Response:
-
-```json
-{
-  "status_code": 200,
-  "body": [
-    { "name": "new image 1 name", "url": "new image 1 url" },
-    { "name": "new image 2 name", "url": "new image 2 url" }
-  ]
-}
-```
+Makes HTTP call to front page of `/r/WidescreenWallpaper` and gets all posts. Compares against images currently in DynamoDB and then writes new images to a DynamoDB table.
 
 Example DynamoDB record:
 
@@ -20,9 +8,6 @@ Example DynamoDB record:
 {
   "created_at": {
     "N": 1638897941134
-  },
-  "in_s3": {
-    "B": false
   },
   "name": {
     "S": "new image 1 name"
@@ -35,6 +20,9 @@ Example DynamoDB record:
   },
   "updated_at": {
     "N": 1638897941134
+  },
+  "media_type": {
+    "S": "image"
   },
   "url": {
     "S": "new image 1 url"
@@ -69,24 +57,3 @@ Create a `.zip` of `bootstrap` to deploy to AWS
 
 - [Docker](https://www.docker.com/)
 - [Rust](https://www.rust-lang.org/)
-
-### Commands
-
-- ```
-  docker run --rm \
-  -e DOCKER_LAMBDA_STAY_OPEN=1 -p 9001:9001 \
-  -v "$PWD"/target/x86_64-unknown-linux-gnu/release/bootstrap:/var/task/bootstrap:ro,delegated \
-  lambci/lambda:provided main
-  ```
-  - Starts a Docker container for your compiled lambda
-- ```
-  aws lambda invoke \
-  --endpoint http://localhost:9001 \
-  --no-sign-request --function-name=rust_lambda \
-  --invocation-type=RequestResponse \
-  --payload $(echo '{}' | base64 ) \
-  test.json
-  ```
-  - Invokes the lambda, prints the output to `test.json` file.
-
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust cargo build --release

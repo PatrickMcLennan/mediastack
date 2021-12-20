@@ -2,22 +2,15 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
-pub struct Event {}
+pub struct WidescreenWallpaperInvocation {}
 
 #[derive(Serialize, Deserialize)]
-pub struct Post {
+pub struct WidescreenWallpaperPost {
     pub name: String,
     pub url: String,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Output {
-    pub status_code: i32,
-    pub images: Vec<Post>,
-    pub message: String,
-}
-
-pub async fn get_posts() -> Vec<Post> {
+pub async fn get_widescreen_wallpapers() -> Vec<WidescreenWallpaperPost> {
     let resp = reqwest::get("https://old.reddit.com/r/widescreenwallpaper")
         .await
         .unwrap()
@@ -27,7 +20,8 @@ pub async fn get_posts() -> Vec<Post> {
 
     let document = Html::parse_document(&resp);
     let post_selector = Selector::parse("div.thing").unwrap(); 
-    let mut posts: Vec<Post> = vec![];
+    let mut posts: Vec<WidescreenWallpaperPost> = vec![];
+
     for post in document.select(&post_selector) {
         match post.value().attr("data-nsfw") {
             Some(nsfw) => {
@@ -63,8 +57,7 @@ pub async fn get_posts() -> Vec<Post> {
         let ext_split: Vec<&str> = url.split("/").collect();
         let ext = ext_split[ext_split.len() - 1];
 
-        posts.push(Post { name: format!("{}.{}", name, ext), url: String::from(url) })
+        posts.push(WidescreenWallpaperPost { name: format!("{}.{}", name, ext), url: String::from(url) })
     }
-
     posts
 }
