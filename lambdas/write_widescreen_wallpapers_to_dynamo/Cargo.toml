@@ -1,5 +1,5 @@
 [package]
-name = "widescreen_wallpapers"
+name = "write_widescreen_wallpapers_to_dynamo"
 version = "0.1.0"
 edition = "2021"
 autobins = false

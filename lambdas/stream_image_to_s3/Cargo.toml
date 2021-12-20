@@ -1,5 +1,5 @@
 [package]
-name = "download_image_to_s3"
+name = "stream_image_to_s3"
 version = "0.1.0"
 edition = "2021"
 

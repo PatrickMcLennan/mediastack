@@ -26,8 +26,8 @@ class MediaStack extends cdk.Stack {
     });
 
     // SQS
-    const queue = new sqs.Queue(this, `media-sqs`, {
-      queueName: `media-sqs`,
+    const imageQueue = new sqs.Queue(this, `media-sqs-images`, {
+      queueName: `media-sqs-images`,
       visibilityTimeout: cdk.Duration.seconds(500),
     });
 
@@ -50,15 +50,15 @@ class MediaStack extends cdk.Stack {
       })
     );
 
-    const downloadImageToS3 = new lambda.Function(this, `DownloadImageToS3`, {
+    const streamImageToS3 = new lambda.Function(this, `StreamImageToS3`, {
       handler: `main`,
       runtime: lambda.Runtime.PROVIDED_AL2,
-      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/download_image_to_s3/bootstrap.zip`)),
-      functionName: `DownloadImageToS3`,
+      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/stream_image_to_s3/bootstrap.zip`)),
+      functionName: `StreamImageToS3`,
       timeout: cdk.Duration.seconds(500),
     });
-    downloadImageToS3.addEventSource(
-      new SqsEventSource(queue, {
+    streamImageToS3.addEventSource(
+      new SqsEventSource(imageQueue, {
         batchSize: 1,
       })
     );
@@ -66,16 +66,18 @@ class MediaStack extends cdk.Stack {
     const writeWidescreenWallpapersToDynamo = new lambda.Function(this, `WriteWidescreenWallpapersToDynamo`, {
       handler: `main`,
       runtime: lambda.Runtime.PROVIDED_AL2,
-      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/widescreen_wallpapers/bootstrap.zip`)),
+      code: lambda.Code.fromAsset(
+        path.resolve(__dirname, `./lambdas/write_widescreen_wallpapers_to_dynamo/bootstrap.zip`)
+      ),
       functionName: `WriteWidescreenWallpapersToDynamo`,
     });
     midnightCronJob.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
 
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);
-    queue.grantSendMessages(addImageDownloadToQueue);
-    queue.grantConsumeMessages(downloadImageToS3);
-    bucket.grantWrite(downloadImageToS3);
+    imageQueue.grantSendMessages(addImageDownloadToQueue);
+    imageQueue.grantConsumeMessages(streamImageToS3);
+    bucket.grantWrite(streamImageToS3);
   }
 }
 

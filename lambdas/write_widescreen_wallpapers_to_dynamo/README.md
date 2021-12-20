@@ -1,6 +1,6 @@
-# widescreen_wallpapers
+# write_widescreen_wallpapers_to_dynamo
 
-Makes HTTP call to front page of `/r/WidescreenWallpaper` and gets all posts. Compares against images currently in DynamoDB and then writes new images to a DynamoDB table.
+Makes HTTP call to front page of `/r/WidescreenWallpaper` and gets all posts. Filters out NSFW & Promoted images, compares against records currently in DynamoDB and then writes new images to a DynamoDB table.
 
 Example DynamoDB record:
 

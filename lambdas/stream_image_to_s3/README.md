@@ -1,13 +1,6 @@
-# add_image_download_to_queue
+# stream_image_to_s3
 
-Interprets DynamoDB stream that gets triggered on any write operation. Any newly written record where `media_type = image`, the following `QueueImage` struct is stringified & pushed on the `media-sqs-images` queue.
-
-```json
-{
-  "name": "image name",
-  "url": "image url"
-}
-```
+Takes an image off of the `media-sqs-images` queue and streams it to S3 via a multi-part upload.
 
 ## Compiling
 

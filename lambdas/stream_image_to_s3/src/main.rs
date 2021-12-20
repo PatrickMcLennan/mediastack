@@ -69,18 +69,18 @@ async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 
 	let queue = match sqs_client
 		.get_queue_url()
-		.queue_name("media-sqs")
+		.queue_name("media-sqs-images")
 		.send()
 		.await {
 			Ok(v) => match v.queue_url() {
 				Some(v) => String::from(v),
 				None => {
-					println!("No queue_url for media-sqs");
+					println!("No queue_url for media-sqs-images");
 					std::process::exit(1)	
 				}
 			},
 			Err(e) => {
-				println!("Error getting media-sqs: {}", e);
+				println!("Error getting media-sqs-images: {}", e);
 				std::process::exit(1)
 			}
 		};
