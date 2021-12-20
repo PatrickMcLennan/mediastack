@@ -22,7 +22,7 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 		let mut keys: HashMap<String, AttributeValue> = HashMap::with_capacity(2);
 		let name = &post.name;
 		keys.insert(String::from("pk"), AttributeValue::S(name.to_string()));
-		keys.insert(String::from("sk"), AttributeValue::S(format!("wallpaper|{}", name)));
+		keys.insert(String::from("sk"), AttributeValue::S(format!("widescreen_wallpaper|{}", name)));
 		get_keys.push(keys)
 	}
 
@@ -79,10 +79,10 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 		} else {
 			let new_request = PutRequest::builder()
 				.item("created_at", AttributeValue::N(time_stamp.to_string()))
-				.item("media_type", AttributeValue::S("image".to_string()))
+				.item("media_type", AttributeValue::S("widescreen_wallpaper".to_string()))
 				.item("name", AttributeValue::S(post.name.to_string()))
 				.item("pk", AttributeValue::S(post.name.to_string()))
-				.item("sk", AttributeValue::S(format!("wallpaper|{}", post.name)))
+				.item("sk", AttributeValue::S(format!("widescreen_wallpaper|{}", post.name)))
 				.item("updated_at", AttributeValue::N(time_stamp.to_string()))
 				.item("url", AttributeValue::S(post.url.to_string()))
 				.build();

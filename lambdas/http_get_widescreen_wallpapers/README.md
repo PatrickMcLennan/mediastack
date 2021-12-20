@@ -1,13 +1,41 @@
-# add_image_download_to_queue
+# http_get_widescreen_wallpaperd
 
-Interprets DynamoDB stream that gets triggered on any write operation. Any newly written record where `media_type = widescreen_wallpaper`, the following `QueueImage` struct is stringified & pushed on the `media-sqs-images` queue.
+Lambda scans DynamoDB for secondary index `media_type = widescreen_wallpaper` and returns all records in an HTTP response.
+
+Ex. 200 response:
 
 ```json
 {
-  "name": "image name",
-  "url": "image url"
+  "status_code": 200,
+  "images": [
+    { "name": "image 1", "url": "https://image1.com" }
+    { "name": "image 2", "url": "https://image2.com" }
+  ],
+  "message": "2 images found"
 }
 ```
+
+Ex. 404 response:
+
+```json
+{
+  "status_code": 404,
+  "images": [],
+  "message": "No images were found."
+}
+```
+
+Ex. 500 response:
+
+```json
+{
+  "status_code": 500,
+  "images": [],
+  "message": "Error querying the the table, try again later."
+}
+```
+
+<hr />
 
 ## Compiling
 

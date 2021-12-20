@@ -24,6 +24,10 @@ class MediaStack extends cdk.Stack {
       sortKey: { name: 'sk', type: dynamo.AttributeType.STRING },
       stream: dynamo.StreamViewType.NEW_IMAGE,
     });
+    table.addGlobalSecondaryIndex({
+      indexName: `media-dynamo-index`,
+      partitionKey: { name: `media_type`, type: dynamo.AttributeType.STRING },
+    });
 
     // SQS
     const imageQueue = new sqs.Queue(this, `media-sqs-images`, {
@@ -50,6 +54,13 @@ class MediaStack extends cdk.Stack {
       })
     );
 
+    const httpGetWidescreenWallpapers = new lambda.Function(this, `HttpGetWidescreenWallpapers`, {
+      handler: `main`,
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/http_get_widescreen_wallpapers/bootstrap.zip`)),
+      functionName: `HttpGetWidescreenWallpapers`,
+    });
+
     const streamImageToS3 = new lambda.Function(this, `StreamImageToS3`, {
       handler: `main`,
       runtime: lambda.Runtime.PROVIDED_AL2,
@@ -75,6 +86,7 @@ class MediaStack extends cdk.Stack {
 
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);
+    table.grantReadData(httpGetWidescreenWallpapers);
     imageQueue.grantSendMessages(addImageDownloadToQueue);
     imageQueue.grantConsumeMessages(streamImageToS3);
     bucket.grantWrite(streamImageToS3);

@@ -1,0 +1,16 @@
+[package]
+name = "http_get_widescreen_wallpapers"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+lambda_runtime = "0.3.0"
+serde_json = "1.0.64"
+serde = "1.0.126"
+aws-config = "0.2.0"
+aws-sdk-dynamodb = "0.2.0"
