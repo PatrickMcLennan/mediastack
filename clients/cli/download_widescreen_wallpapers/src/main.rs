@@ -1,6 +1,8 @@
+#[macro_use]
+extern crate dotenv_codegen;
+
 mod lib;
 use crate::lib::{Image};
-use dotenv::dotenv;
 use std::fs;
 use std::path::Path;
 use std::collections::HashMap;
@@ -9,22 +11,10 @@ use std::io::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
-	dotenv().unwrap();
-	
-    let endpoint = match dotenv::var("API_GATEWAY_ENDPOINT") {
-        Ok(e) => String::from(e),
-        Err(e) => panic!("Error getting endpoint from .env: {}", e)
-    };
-
-    let api_key = match dotenv::var("API_GATEWAY_API_KEY") {
-        Ok(k) => String::from(k),
-        Err(e) => panic!("Error loading api key from .env: {}", e)
-    };
-
-	let images_dir = match dotenv::var("WIDESCREEN_WALLPAPERS_DIR") {
-        Ok(k) => String::from(k),
-        Err(e) => panic!("Error loading local image dir from .env: {}", e)
-    };
+	let endpoint = dotenv!("API_GATEWAY_ENDPOINT").to_string();
+	let api_key = dotenv!("API_GATEWAY_API_KEY").to_string();
+	let wallpaper_dir_string = dotenv!("WIDESCREEN_WALLPAPERS_DIR").to_string();
+	let wallpaper_dir_path = Path::new(&wallpaper_dir_string);
 
 	let reqwest_client = reqwest::Client::new();
 	let mut dynamo_images: HashMap<String, Image> = HashMap::new();
@@ -45,14 +35,14 @@ async fn main() -> Result<(), ()> {
 			Err(e) => panic!("Error making initial GET request: {}", e)
 		};
 
-	let local_image_path = Path::new(&images_dir);
-	match fs::read_dir(local_image_path) {
+	match fs::read_dir(wallpaper_dir_path) {
 		Ok(f) => {
 			for file in f {
 				let entry = file.unwrap();
 				let path = entry.path();
 				let file = Path::new(&path);
-				let name = file.display();
+				let file_path = file.display();
+				let name = file_path.to_string().replace(&format!("{}/", &wallpaper_dir_string), "");
 				if path.is_dir() {
 					continue
 				};
@@ -66,16 +56,15 @@ async fn main() -> Result<(), ()> {
 				continue
 			}
 		},
-		Err(e) => {
-			panic!("Error reading local image path: {}", e)
-		}
+		Err(e) => panic!("Error reading local image path: {}", e)
 	}
 
 	// TODO:
 	// Refactor to download all using threads (tokio::spawn)
 
 	for image in dynamo_images {
-		let path_string = format!("{}/{}", &images_dir, &image.0);
+		let path_string = format!("{}/{}", &wallpaper_dir_string, &image.0);
+		println!("{}", path_string);
 		let path = Path::new(&path_string);
 		let mut file = match File::create(&path) {
 			Ok(f) => f,

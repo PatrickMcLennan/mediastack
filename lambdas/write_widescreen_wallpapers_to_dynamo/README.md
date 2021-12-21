@@ -51,9 +51,3 @@ Create a `.zip` of `bootstrap` to deploy to AWS
 
 <hr />
 
-## Developing
-
-### You need
-
-- [Docker](https://www.docker.com/)
-- [Rust](https://www.rust-lang.org/)

@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+
+  dev:
+    image: rust:1.57.0
+    container_name: download_widescreen_wallpapers_dev
+    working_dir: /usr/app
+    environment:
+      API_GATEWAY_ENDPOINT: ${API_GATEWAY_ENDPOINT}
+      API_GATEWAY_API_KEY: ${API_GATEWAY_API_KEY}
+      WIDESCREEN_WALLPAPERS_DIR: ${WIDESCREEN_WALLPAPERS_DIR}
+    volumes:
+      -  .:/usr/app
+    command: cargo build
+
+  prod:
+    image: rust:1.57.0
+    container_name: download_widescreen_wallpapers_prod
+    working_dir: /usr/app
+    environment:
+      API_GATEWAY_ENDPOINT: ${API_GATEWAY_ENDPOINT}
+      API_GATEWAY_API_KEY: ${API_GATEWAY_API_KEY}
+      WIDESCREEN_WALLPAPERS_DIR: ${WIDESCREEN_WALLPAPERS_DIR}
+    volumes:
+      -  .:/usr/app
+    command: cargo build --release
+
+  run:
+    image: rust:1.57.0
+    container_name: download_widescreen_wallpapers_run
+    working_dir: /usr/app
+    environment:
+      API_GATEWAY_ENDPOINT: ${API_GATEWAY_ENDPOINT}
+      API_GATEWAY_API_KEY: ${API_GATEWAY_API_KEY}
+      WIDESCREEN_WALLPAPERS_DIR: ${WIDESCREEN_WALLPAPERS_DIR}
+    volumes:
+      - .:/usr/app
+      - ${WIDESCREEN_WALLPAPERS_DIR}:${WIDESCREEN_WALLPAPERS_DIR}
+    command: ./target/release/download_widescreen_wallpapers

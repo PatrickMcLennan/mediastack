@@ -16,3 +16,5 @@ test.json
 cdk.out
 
 .env
+*.jpg
+*.png
