@@ -1,4 +1,4 @@
-# http_get_widescreen_wallpaperd
+# http_get_widescreen_wallpapers
 
 Lambda scans DynamoDB for secondary index `media_type = widescreen_wallpaper` and returns all records in an HTTP response.
 

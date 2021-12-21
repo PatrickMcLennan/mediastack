@@ -1,11 +1,11 @@
 mod types;
-use crate::types::{HttpGetWidescreenWallpapers, Image, Output};
+use crate::types::{HttpGetWidescreenWallpapers, Image, Response};
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_dynamodb::{Client, Region};
 use lambda_runtime::{Context, Error};
 use aws_sdk_dynamodb::model::{AttributeValue};
 
-async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Output, Error> {
+async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Response, Error> {
 	const TABLE_NAME: &str = "media-dynamo";
 	let region_provider = RegionProviderChain::first_try("us-east-1")
 		.or_default_provider()
@@ -80,24 +80,12 @@ async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Output, 
 
 	let total_images = images.len();
 	if failed_query == true {
-		return Ok(Output {
-			status_code: 500,
-			images: vec![],
-			message: String::from("Error querying the the table, try again later.")
-		})
+		return Ok(Response::internal_error())
 	} else if no_images == true || total_images == 0 {
-		return Ok(Output {
-			status_code: 404,
-			images: vec![],
-			message: String::from("No images were found.")
-		})
+		return Ok(Response::not_found())
 	};
 
-	Ok(Output {
-		status_code: 200,
-		images: images,
-		message: format!("{} images found", total_images)
-	})
+	Ok(Response::success(images))
 }
 
 #[tokio::main]

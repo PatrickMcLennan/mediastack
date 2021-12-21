@@ -1,3 +1,4 @@
+import * as apigateway from '@aws-cdk/aws-apigateway';
 import * as cdk from '@aws-cdk/core';
 import * as lambda from '@aws-cdk/aws-lambda';
 import * as s3 from '@aws-cdk/aws-s3';
@@ -7,10 +8,36 @@ import * as sqs from '@aws-cdk/aws-sqs';
 import * as events from '@aws-cdk/aws-events';
 import * as targets from '@aws-cdk/aws-events-targets';
 import { DynamoEventSource, SqsEventSource } from '@aws-cdk/aws-lambda-event-sources';
+import { config } from 'dotenv';
+
+config({ path: path.resolve(__dirname, `.env`) });
 
 class MediaStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // APIGateway
+    const restApi = new apigateway.RestApi(this, 'media-apigateway', {
+      restApiName: `media-apigateway`,
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+      },
+      description: `Rest API for Mediastack`,
+    });
+    const restApiPlan = restApi.addUsagePlan(`media-apigateway-usagePlan`, {
+      name: `Easy`,
+      description: `Only allow api key carriers access to media-apigateway`,
+    });
+    restApiPlan.addApiStage({
+      stage: restApi.deploymentStage,
+    });
+    const restApiKey = new apigateway.ApiKey(this, `media-apigateway-apikey`, {
+      apiKeyName: `media-apigateway-apikey`,
+      description: `The API key for media-apigateway`,
+      value: process.env.API_GATEWAY_API_KEY,
+    });
+    restApiPlan.addApiKey(restApiKey);
 
     // Cron
     const midnightCronJob = new events.Rule(this, 'MidnightCronJob', {
@@ -83,6 +110,12 @@ class MediaStack extends cdk.Stack {
       functionName: `WriteWidescreenWallpapersToDynamo`,
     });
     midnightCronJob.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
+
+    // HTTP Routes
+    const widescreenWallpapersApi = restApi.root.addResource(`widescreen_wallpapers`);
+    widescreenWallpapersApi.addMethod(`GET`, new apigateway.LambdaIntegration(httpGetWidescreenWallpapers), {
+      apiKeyRequired: true,
+    });
 
     // Permissions
     table.grantReadWriteData(writeWidescreenWallpapersToDynamo);
