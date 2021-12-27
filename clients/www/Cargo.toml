@@ -1,0 +1,17 @@
+[package]
+name = "www"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+yew = "0.19"
+yew-router = "0.16.0"
+wasm-bindgen = { version = "0.2.67", features = [
+  "serde-serialize"
+]}
+wasm-bindgen-futures = "0.4.24"
+web-sys = "0.3.55" 
+serde = "1.0.132"
+validator = { version = "0.14.0", features = ["derive"] }
+regex = "1.5"
+lazy_static = "1.4.0"
