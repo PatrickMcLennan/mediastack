@@ -3,6 +3,7 @@
 mod components;
 mod pages;
 mod routes;
+mod hooks;
 
 use crate::pages::*;
 use crate::components::*;
@@ -28,13 +29,9 @@ fn secure() -> Html {
 
 fn switch(routes: &Route) -> Html {
 	match routes {
-		Route::Home => html! {
-			<Home /> 
-		},
-		Route::Login => html! {
-			<Login />
-		},
-		Route::NotFound => html! { <h1>{ "404" }</h1> },
+		Route::Home => html! { <Home /> },
+		Route::Login => html! { <Login /> },
+		Route::NotFound => html! { <FourOhFour /> },
 	}
 }
 

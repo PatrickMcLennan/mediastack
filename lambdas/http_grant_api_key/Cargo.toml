@@ -1,5 +1,5 @@
 [package]
-name = "http_get_widescreen_wallpapers"
+name = "http_grant_api_key"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,6 +11,7 @@ path = "src/main.rs"
 tokio = { version = "1", features = ["full"] }
 lambda_runtime = "0.3.0"
 serde_json = "1.0.64"
-serde = "1.0.126"
+serde = { version = "1.0.126", features = ["derive"] }
 aws-config = "0.2.0"
-aws-sdk-dynamodb = "0.2.0"
+dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"

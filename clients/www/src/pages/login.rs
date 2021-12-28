@@ -8,7 +8,6 @@ pub fn login() -> Html {
 	let loading = use_state(|| false);
 	let loading_clone = loading.clone();
 
-	
 	let callback = move |form: LoginFormDTO| {
 		loading_clone.set(true);
 		console::log_1(&JsValue::from(form.email.to_string()));

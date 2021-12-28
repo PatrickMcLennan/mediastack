@@ -88,6 +88,13 @@ class MediaStack extends cdk.Stack {
       functionName: `HttpGetWidescreenWallpapers`,
     });
 
+    const httpGrantApiKey = new lambda.Function(this, `HttpGrantApiKey`, {
+      handler: `main`,
+      runtime: lambda.Runtime.PROVIDED_AL2,
+      code: lambda.Code.fromAsset(path.resolve(__dirname, `./lambdas/http_grant_api_key/bootstrap.zip`)),
+      functionName: `HttpGrantApiKey`,
+    });
+
     const streamImageToS3 = new lambda.Function(this, `StreamImageToS3`, {
       handler: `main`,
       runtime: lambda.Runtime.PROVIDED_AL2,
@@ -112,7 +119,14 @@ class MediaStack extends cdk.Stack {
     midnightCronJob.addTarget(new targets.LambdaFunction(writeWidescreenWallpapersToDynamo));
 
     // HTTP Routes
-    const widescreenWallpapersApi = restApi.root.addResource(`widescreen_wallpapers`);
+    const root = restApi.root.addResource(`api`);
+    const authApi = root.addResource(`auth`);
+    const widescreenWallpapersApi = root.addResource(`widescreen_wallpapers`);
+
+    authApi.addMethod(`POST`, new apigateway.LambdaIntegration(httpGrantApiKey), {
+      apiKeyRequired: false,
+    });
+
     widescreenWallpapersApi.addMethod(`GET`, new apigateway.LambdaIntegration(httpGetWidescreenWallpapers), {
       apiKeyRequired: true,
     });

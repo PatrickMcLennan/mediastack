@@ -141,13 +141,13 @@ pub fn login_form(props: &Props) -> Html {
 					</div>
 					<input class="form-control" id="email" onchange={onchange("email".to_string())} type="text" value={form.email.to_string()} />
 				</div>
-				<div style="min-height: 45px;">
+				<div style="min-height: 50px;">
 					{
 						email_error_messages
 							.into_iter()
 							.map(|message| {
 								html! { 
-									<small class="d-inline-flex align-items-center badge bg-danger mt-2 mr-2 p-2 pr-3" key={String::from(message)} style="color: white;">
+									<small class="d-inline-flex align-items-center badge bg-danger mt-3 ml-4 p-2 pr-3" key={String::from(message)} style="color: white;">
 										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x d-block mr-1" viewBox="0 0 16 16">
 											<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
 										</svg>
@@ -159,7 +159,7 @@ pub fn login_form(props: &Props) -> Html {
 					}
 				</div>
 			</div>
-			<div class="form-group mb-1">
+			<div class="form-group">
 				<label for="password">{"Password"}</label>
 				<div class="input-group">
 					<div class="input-group-prepend">
@@ -175,13 +175,13 @@ pub fn login_form(props: &Props) -> Html {
 					</div>
 					<input class="form-control" id="password" onchange={onchange("password".to_string())} type="password" value={form.password.to_string()} />
 				</div>
-				<div style="min-height: 45px;">
+				<div style="min-height: 50px;">
 					{
 						password_error_messages
 							.into_iter()
 							.map(|message| {
 								html! { 
-									<small class="d-inline-flex align-items-center badge bg-danger mt-2 mr-2 p-2 pr-3" key={String::from(message)} style="color: white;">
+									<small class="d-inline-flex align-items-center badge bg-danger mt-3 ml-4 p-2 pr-3" key={String::from(message)} style="color: white;">
 										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x mr-1" viewBox="0 0 16 16">
 											<path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
 										</svg>
@@ -193,7 +193,7 @@ pub fn login_form(props: &Props) -> Html {
 					}
 				</div>
 			</div>
-			<button disabled={props.loading} type="submit" class="btn btn-primary btn-large btn-block mt-2">{"Submit"}</button>
+			<button disabled={props.loading} type="submit" class="btn btn-primary btn-large btn-block mt-3">{"Submit"}</button>
 		</form>
     }
 }

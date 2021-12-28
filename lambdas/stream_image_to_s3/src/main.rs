@@ -4,10 +4,7 @@ use crate::types::{SqsEvent, SqsImage};
 
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::{ByteStream, Client, Region};
-use futures_util::StreamExt;
 use lambda_runtime::{Context, Error};
-use aws_sdk_s3::model::{CompletedMultipartUpload, CompletedPart};
-use bytes::{BytesMut};
 
 async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 	let messages = match event.Records {
@@ -46,27 +43,6 @@ async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
     let s3_client = Client::new(&shared_config);
 	let sqs_client = aws_sdk_sqs::Client::new(&shared_config);
 
-	let upload = match s3_client
-		.create_multipart_upload()
-		.bucket("media-s3-patrick")
-		.key(name)
-		.send()
-		.await {
-			Ok(s) => s,
-			Err(e) => {
-				println!("Error creating the multipart upload: {}", e);
-				std::process::exit(1)
-			}
-		};
-
-	let upload_id = match upload.upload_id {
-		Some(v) => String::from(v),
-		None => {
-			println!("Can't get an upload_id");
-			std::process::exit(1)
-		}
-	};
-
 	let queue = match sqs_client
 		.get_queue_url()
 		.queue_name("media-sqs-images")
@@ -74,137 +50,36 @@ async fn handler(event: SqsEvent, __: Context) -> Result<(), Error> {
 		.await {
 			Ok(v) => match v.queue_url() {
 				Some(v) => String::from(v),
-				None => {
-					println!("No queue_url for media-sqs-images");
-					std::process::exit(1)	
-				}
+				None => panic!("No queue_url for media-sqs-images")
 			},
-			Err(e) => {
-				println!("Error getting media-sqs-images: {}", e);
-				std::process::exit(1)
-			}
+			Err(e) => panic!("Error getting media-sqs-images: {}", e)
 		};
 
-	let mut stream = reqwest::get(url)
+	let stream = reqwest::get(url)
         .await?
-        .bytes_stream();
+        .bytes()
+		.await?;
 
-	let mut part_number: i32 = 1;
-	let mut parts: Vec<CompletedPart> = vec![];
-	let mut buffer = BytesMut::with_capacity(10000000);
-
-	while let Some(item) = stream.next().await {
-		match item {
-			Ok(v) => {
-				buffer.extend_from_slice(&v);
-				let new_buffer_len = buffer.len();
-				if new_buffer_len > 5000000 {
-					part_number += 1;
-					match s3_client
-						.upload_part()
-						.bucket("media-s3-patrick")
-						.key(name)
-						.upload_id(&upload_id)
-						.part_number(part_number)
-						.body(ByteStream::from(bytes::Bytes::from(buffer.clone())))
-						.send()
-						.await {
-							Ok(v) => {
-								let e_tag = match v.e_tag {
-									Some(e) => e,
-									None => {
-										println!("No e_tag for {}", part_number);
-										std::process::exit(1)		
-									}
-								};
-								let new_part = CompletedPart::builder().e_tag(e_tag).part_number(part_number).build();
-								buffer.clear();
-								parts.push(new_part)
-							},
-							Err(e) => {
-								println!("Could not upload_part: {}", e);
-								std::process::exit(1)
-							}
-						};
-				}
-			},
-			Err(e) => {
-				println!("Error adding to the multipart upload: {}", e);
-				match s3_client
-					.abort_multipart_upload()
-					.bucket("media-s3-patrick")
-					.key(name)
-					.upload_id(&upload_id)
+	match s3_client
+		.put_object()
+		.bucket("media-s3-patrick")
+		.body(ByteStream::from(bytes::Bytes::from(stream)))
+		.key(name)
+		.send()
+		.await {
+			Ok(_) => {
+				match sqs_client
+					.delete_message()
+					.queue_url(queue)
+					.receipt_handle(receipt_handle)
 					.send()
 					.await {
-						Ok(v) => v,
-						Err(e) => {
-							println!("Could not abort_multipart_upload: {}", e);
-							std::process::exit(1)
-						}
+						Ok(_) => return Ok(()),
+						Err(e) => panic!("Could not delete_message: {}", e)
 					};
-				std::process::exit(1)
-			}
-		}
-    }
-
-	part_number += 1;
-	match s3_client
-		.upload_part()
-		.bucket("media-s3-patrick")
-		.key(name)
-		.upload_id(&upload_id)
-		.part_number(part_number)
-		.body(ByteStream::from(bytes::Bytes::from(buffer)))
-		.send()
-		.await {
-			Ok(v) => {
-				let e_tag = match v.e_tag {
-					Some(e) => e,
-					None => {
-						println!("No e_tag for {}", part_number);
-						std::process::exit(1)		
-					}
-				};
-				let new_part = CompletedPart::builder().e_tag(e_tag).part_number(part_number).build();
-				parts.push(new_part)
 			},
-			Err(e) => {
-				println!("Could not upload_part: {}", e);
-				std::process::exit(1)
-			}
-		};
-
-	let completed_upload = CompletedMultipartUpload::builder().set_parts(Some(parts)).build();
-	match s3_client
-		.complete_multipart_upload()
-		.bucket("media-s3-patrick")
-		.key(name)
-		.upload_id(&upload_id)
-		.multipart_upload(completed_upload)
-		.send()
-		.await {
-			Ok(v) => v,
-			Err(e) => {
-				println!("Could not complete_multipart_upload: {}", e);
-				std::process::exit(1)
-			}
-		};
-	
-	match sqs_client
-		.delete_message()
-		.queue_url(queue)
-		.receipt_handle(receipt_handle)
-		.send()
-		.await {
-			Ok(v) => v,
-			Err(e) => {
-				println!("Could not delete_message: {}", e);
-				std::process::exit(1)
-			}
-		};
-
-	Ok(())
+			Err(e) => panic!("Could not write image to S3: {}", e)
+		}
 }
 
 #[tokio::main]

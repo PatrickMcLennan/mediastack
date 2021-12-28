@@ -44,16 +44,17 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 						const MIN_RECORDS: usize = 1;
 						let has_records = &r.len() >= &MIN_RECORDS;
 						if has_records {
-							let records = &r[0];
-							for pk in records.values() {
-								let value = match pk.as_s() {
-									Ok(v) => String::from(v),
-									Err(e) => {
-										println!("Error getting the results from the batch_get_item: {:?}", e);
-										std::process::exit(1)
-									}
-								};
-								dynamo_hashmap.insert(value, true);
+							for record in r {
+								for pk in record.values() {
+									let value = match pk.as_s() {
+										Ok(v) => String::from(v),
+										Err(e) => {
+											println!("Error getting the results from the batch_get_item: {:?}", e);
+											std::process::exit(1)
+										}
+									};
+									dynamo_hashmap.insert(value, true);
+								}
 							}
 						}
 					},
@@ -65,46 +66,50 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 				std::process::exit(1)
 			}
 		};
-
-	let time_stamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-		Ok(v) => v.as_secs(),
-		Err(_) => 0
-	};
-
-
-	let mut put_params = vec![];
-	for post in fetched_posts {
-		if dynamo_hashmap.contains_key(&post.name) {
-			continue;
-		} else {
-			let new_request = PutRequest::builder()
-				.item("created_at", AttributeValue::N(time_stamp.to_string()))
-				.item("media_type", AttributeValue::S("widescreen_wallpaper".to_string()))
-				.item("name", AttributeValue::S(post.name.to_string()))
-				.item("pk", AttributeValue::S(post.name.to_string()))
-				.item("sk", AttributeValue::S(format!("widescreen_wallpaper|{}", post.name)))
-				.item("updated_at", AttributeValue::N(time_stamp.to_string()))
-				.item("url", AttributeValue::S(post.url.to_string()))
-				.build();
-			put_params.push(WriteRequest::builder().put_request(new_request).build());
-			continue;
+	
+		let time_stamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+			Ok(v) => v.as_secs(),
+			Err(_) => 0
+		};
+	
+		let mut put_params = vec![];
+		for post in fetched_posts {
+			if dynamo_hashmap.contains_key(&post.name) {
+				continue
+			} else {
+				let new_request = PutRequest::builder()
+					.item("created_at", AttributeValue::N(time_stamp.to_string()))
+					.item("media_type", AttributeValue::S("widescreen_wallpaper".to_string()))
+					.item("name", AttributeValue::S(post.name.to_string()))
+					.item("pk", AttributeValue::S(post.name.to_string()))
+					.item("sk", AttributeValue::S(format!("widescreen_wallpaper|{}", post.name)))
+					.item("updated_at", AttributeValue::N(time_stamp.to_string()))
+					.item("url", AttributeValue::S(post.url.to_string()))
+					.build();
+				put_params.push(WriteRequest::builder().put_request(new_request).build());
+				continue
+			}
 		}
-	}
-	let total_params = put_params.len();
-		
-	match dynamo_client
-		.batch_write_item()	
-		.request_items(TABLE_NAME, put_params)
-		.send()
-		.await {
-			Ok(_) => {
-				println!("{} records added to Dynamo", total_params);
-				Ok(())
-			},
-			Err(e) => {
-				println!("Error in the batch_write_item: {:?}", e);
-				std::process::exit(1)
-			},
+		let total_params = put_params.len();
+
+		if total_params == 0 {
+			println!("No new images found");
+			Ok(())
+		} else {
+			match dynamo_client
+				.batch_write_item()	
+				.request_items(TABLE_NAME, put_params)
+				.send()
+				.await {
+					Ok(_) => {
+						println!("{} records added to Dynamo", total_params);
+						Ok(())
+					},
+					Err(e) => {
+						println!("Error in the batch_write_item: {:?}", e);
+						std::process::exit(1)
+					},
+				}
 		}
 }
 
