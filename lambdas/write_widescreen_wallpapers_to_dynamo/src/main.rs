@@ -48,10 +48,7 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 								for pk in record.values() {
 									let value = match pk.as_s() {
 										Ok(v) => String::from(v),
-										Err(e) => {
-											println!("Error getting the results from the batch_get_item: {:?}", e);
-											std::process::exit(1)
-										}
+										Err(e) => panic!("Error getting the results from the batch_get_item: {:?}", e)
 									};
 									dynamo_hashmap.insert(value, true);
 								}
@@ -83,6 +80,7 @@ async fn handler(_: WidescreenWallpaperInvocation, __: Context) -> Result<(), Er
 					.item("name", AttributeValue::S(post.name.to_string()))
 					.item("pk", AttributeValue::S(post.name.to_string()))
 					.item("sk", AttributeValue::S(format!("widescreen_wallpaper|{}", post.name)))
+					.item("thumbnail_url", AttributeValue::S(post.thumbnail_url.to_string()))
 					.item("updated_at", AttributeValue::N(time_stamp.to_string()))
 					.item("url", AttributeValue::S(post.url.to_string()))
 					.build();

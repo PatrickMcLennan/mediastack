@@ -8,7 +8,7 @@ use wasm_bindgen::{JsValue};
 
 #[function_component(Nav)]
 pub fn nav() -> Html {
-	let has_auth = use_has_auth();
+	let (has_auth, _) = use_has_auth();
 	let history = use_history().unwrap();
 
 	let logout = move |_: MouseEvent| {

@@ -8,6 +8,7 @@ pub struct WidescreenWallpaperInvocation {}
 pub struct WidescreenWallpaperPost {
     pub name: String,
     pub url: String,
+	pub thumbnail_url: String,
 }
 
 pub async fn get_widescreen_wallpapers() -> Vec<WidescreenWallpaperPost> {
@@ -20,6 +21,7 @@ pub async fn get_widescreen_wallpapers() -> Vec<WidescreenWallpaperPost> {
 
     let document = Html::parse_document(&resp);
     let post_selector = Selector::parse("div.thing").unwrap(); 
+	let thumbnail_selector = Selector::parse("a.thumbnail[data-event-action='thumbnail'] > img").unwrap();
     let mut posts: Vec<WidescreenWallpaperPost> = vec![];
 
     for post in document.select(&post_selector) {
@@ -52,12 +54,25 @@ pub async fn get_widescreen_wallpapers() -> Vec<WidescreenWallpaperPost> {
             None => continue,
         };
 
+		let thumbnail_img = post.select(&thumbnail_selector);
+		let mut thumbnail_url = String::new();
+		for thumbnail in thumbnail_img {
+			thumbnail_url = match thumbnail.value().attr("src") {
+				Some(s) => format!("https://{}", s),
+				None => continue
+			}
+		}
+
+		if thumbnail_url.len() == 0 {
+			continue
+		}
+
         let name_split: Vec<&str> = url.split(".").collect();
         let name = name_split[name_split.len() - 2].replace("it/", "");
         let ext_split: Vec<&str> = url.split("/").collect();
         let ext = ext_split[ext_split.len() - 1];
 
-        posts.push(WidescreenWallpaperPost { name: format!("{}.{}", name, ext), url: String::from(url) })
+        posts.push(WidescreenWallpaperPost { name: format!("{}.{}", name, ext), url: String::from(url), thumbnail_url })
     }
     posts
-}
+} 

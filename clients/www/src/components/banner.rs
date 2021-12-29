@@ -13,7 +13,7 @@ pub fn banner() -> Html {
 	};
 
 	html! {
-		<section class="jumbotron jumbotron-fluid mb-5 pt-5 pb-5">
+		<section class="jumbotron jumbotron-fluid mb-4 pt-5 pb-5">
 			<div class="container">
 				<h1 class="my-1.5">{h1}</h1>
 				<h2 class="mb-1.5 font-italic">{h2}</h2>

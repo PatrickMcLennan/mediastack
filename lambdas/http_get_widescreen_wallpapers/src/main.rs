@@ -22,10 +22,11 @@ async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Response
 		.table_name(TABLE_NAME)
 		.index_name("media-dynamo-index")
 		.key_condition_expression("#media_type = :widescreen_wallpaper")
-		.projection_expression("#name, #url")
+		.projection_expression("#name, #url, #thumbnail_url")
 		.expression_attribute_names("#media_type", "media_type")
 		.expression_attribute_names("#name", "name")
 		.expression_attribute_names("#url", "url")
+		.expression_attribute_names("#thumbnail_url", "thumbnail_url")
 		.expression_attribute_values(":widescreen_wallpaper", AttributeValue::S(String::from("widescreen_wallpaper")))
 		.send()	
 		.await {
@@ -42,7 +43,7 @@ async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Response
 						no_images = true
 					} else {
 						for value in values {
-							let (name_option, url_option) = (value.get("name"), value.get("url"));							
+							let (name_option, url_option, thumbnail_url_option) = (value.get("name"), value.get("url"), value.get("thumbnail_url"));							
 							let name = match name_option {
 								Some(n) => match n.as_s() {
 									Ok(s) => String::from(s),
@@ -51,10 +52,9 @@ async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Response
 										continue
 									}
 								},
-								None => {
-									continue
-								}
+								None => continue
 							};
+
 							let url = match url_option {
 								Some(u) => match u.as_s() {
 									Ok(s) => String::from(s),
@@ -63,11 +63,20 @@ async fn handler(_: HttpGetWidescreenWallpapers, __: Context) -> Result<Response
 										continue
 									}
 								},
-								None => {
-									continue
-								}
+								None => continue
 							};
-							images.push(Image { name, url })
+
+							let thumbnail_url = match thumbnail_url_option {
+								Some(u) => match u.as_s() {
+									Ok(s) => String::from(s),
+									Err(e) => {
+										println!("Error getthing thumbnail_url: {:?}", e);
+										continue
+									}
+								},
+								None => continue
+							};
+							images.push(Image { name, url, thumbnail_url })
 						}
 					}
 				}

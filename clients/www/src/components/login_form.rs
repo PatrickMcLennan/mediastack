@@ -87,11 +87,8 @@ pub fn login_form(props: &Props) -> Html {
 		let form = form.clone();
 		Callback::from(move |e: Event| {
 			let input = e.target_unchecked_into::<HtmlInputElement>().value();
-            if field == "email" {
-				form.dispatch(FormAction::Email(input))
-			} else {
-				form.dispatch(FormAction::Password(input))
-			}
+            if field == "email" { form.dispatch(FormAction::Email(input)) } 
+			else { form.dispatch(FormAction::Password(input)) }
         })
 	};
 
@@ -193,7 +190,20 @@ pub fn login_form(props: &Props) -> Html {
 					}
 				</div>
 			</div>
-			<button disabled={props.loading} type="submit" class="btn btn-primary btn-large btn-block mt-3">{"Submit"}</button>
+			// <button disabled={props.loading} type="submit" class="btn btn-primary btn-large btn-block mt-3">{"Submit"}</button>
+			<button disabled={props.loading} type="submit" class="d-flex align-items-center justify-content-center btn btn-primary btn-large btn-block mt-3" style="min-height: 49px;">
+			{if props.loading {
+				html! {
+					<div class="spinner-border text-light" role="status">
+						<span class="sr-only">{"Loading..."}</span>
+					</div>
+				}
+			} else {
+				html! {
+					<span>{"Submit"}</span>
+				}
+			}}
+			</button>
 		</form>
     }
 }

@@ -24,6 +24,9 @@ Example DynamoDB record:
   "media_type": {
     "S": "image"
   },
+  "thumbnail_url": {
+    "S": "new image 1 thumbnail_url"
+  },
   "url": {
     "S": "new image 1 url"
   }

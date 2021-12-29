@@ -5,6 +5,7 @@ mod components;
 mod pages;
 mod routes;
 mod hooks;
+mod types;
 
 use crate::pages::*;
 use crate::components::*;
