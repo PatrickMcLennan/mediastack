@@ -9,10 +9,9 @@ use reqwasm::http::{Request};
 #[function_component(Login)]
 pub fn login() -> Html {
 	let loading = use_state(|| false);
+	let api_error = use_state(|| String::new());
 	let history = use_history().unwrap();
-
 	let loading_clone = loading.clone();
-
 
 	let callback = move |form: LoginFormDTO| {
 		loading_clone.set(true);
@@ -34,7 +33,6 @@ pub fn login() -> Html {
 						};
 						let session_storage = web_sys::window().unwrap().session_storage().unwrap().unwrap();
 						session_storage.set_item("media-stack", &text).unwrap();
-						console::log_1(&JsValue::from("hello".to_string()));
 						history_clone.push(Route::Home)
 					},
 					Err(e) => console::log_1(&JsValue::from(e.to_string()))
@@ -45,6 +43,11 @@ pub fn login() -> Html {
 	};
 
     html! {
-		<LoginForm onsubmit={Callback::from(callback)} loading={*loading} />
+		<>
+			<div aria_hidden={ if *&api_error.len() >= 1  { "false".to_string() } else { "true".to_string() } } class="alert alert-danger container" role="alert" style={format!("min-height: 50px; opacity: {}", if *&api_error.len() >= 1 { 1 } else { 0 })}>
+				{format!("{}", *api_error)}
+			</div>
+			<LoginForm onsubmit={Callback::from(callback)} loading={*loading} />
+		</>
     }
 }

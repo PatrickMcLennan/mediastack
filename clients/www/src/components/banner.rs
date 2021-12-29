@@ -10,6 +10,7 @@ pub fn banner() -> Html {
 		Route::Login => (String::from("MediaStack"), String::from("Please log in")),
 		Route::NotFound => (String::from("404!"), String::from("you're lost")),
 		Route::Home => (String::from("Welcome home"), String::from("Your media")),
+		Route::Widescreen_Wallpaper { name } => (String::from(name), String::from("widescreen_wallpaper")),
 	};
 
 	html! {

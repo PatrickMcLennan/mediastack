@@ -1,0 +1,3 @@
+mod widescreen_wallpapers_provider;
+
+pub use widescreen_wallpapers_provider::{WidescreenWallpapersProvider, WideScreenWallpaperContext};
