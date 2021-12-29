@@ -1,5 +1,6 @@
 #![recursion_limit = "256"]
-
+#[macro_use]
+extern crate dotenv_codegen;
 mod components;
 mod pages;
 mod routes;
@@ -51,6 +52,7 @@ fn app() -> Html {
     }
 }
 
+// #[tokio::main]
 fn main() {
     yew::start_app::<App>();
 }

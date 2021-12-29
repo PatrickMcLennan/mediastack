@@ -20,6 +20,8 @@ class MediaStack extends cdk.Stack {
     const restApi = new apigateway.RestApi(this, 'media-apigateway', {
       restApiName: `media-apigateway`,
       defaultCorsPreflightOptions: {
+        allowCredentials: true,
+        allowHeaders: ['*'],
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
       },

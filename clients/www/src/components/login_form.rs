@@ -1,5 +1,5 @@
 use yew::{function_component, html, Html, Callback, Event, FocusEvent, Properties, TargetCast, Reducible, use_reducer, UseReducerHandle};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use web_sys::{HtmlInputElement};
 use validator::{Validate};
 use std::rc::Rc;
@@ -24,7 +24,7 @@ pub struct Props {
 	pub onsubmit: Callback<LoginFormDTO>,
 	pub loading: bool,
 }
-
+#[derive(Serialize)]
 pub struct LoginFormDTO {
 	pub email: String,
 	pub password: String

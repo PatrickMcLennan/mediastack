@@ -9,12 +9,8 @@ use crate::types::{Event, Response, Body};
 async fn handler(event: Event, __: Context) -> Result<Response, Error> {
 	let body: Body = match event.body {
 		Some(b) => {
-			println!("event body: {:?}", b);
 			match serde_json::from_str(&b) {
-				Ok(v) => {
-					println!("from_str result: {:?}", v);
-					v.body
-				},
+				Ok(v) => v,
 				Err(_) => return Ok(Response::invalid())
 			}
 		},
@@ -25,14 +21,8 @@ async fn handler(event: Event, __: Context) -> Result<Response, Error> {
 	let correct_password = dotenv!("ADMIN_PASSWORD").to_string();
 	let key = dotenv!("API_GATEWAY_API_KEY").to_string();
 
-	println!("body: {:?}", body);
-	println!("correct_email: {}", correct_email);
-	println!("correct_password: {}", correct_password);
-	println!("key: {}", key);
-	
 	match body.email {
 		Some(e) => {
-			println!("body.email: {}", e);
 			if e != correct_email {
 				return Ok(Response::invalid());
 			}
@@ -42,7 +32,6 @@ async fn handler(event: Event, __: Context) -> Result<Response, Error> {
 	
 	match body.password {
 		Some(p) => {
-			println!("body.password: {}", p);
 			if p != correct_password {
 				return Ok(Response::invalid())
 			}

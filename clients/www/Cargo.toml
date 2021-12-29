@@ -11,11 +11,15 @@ wasm-bindgen = { version = "0.2.67", features = [
 ]}
 wasm-bindgen-futures = "0.4.24"
 web-sys = { version = "0.3.55", features = [
-  "HtmlDocument"
+  "HtmlDocument",
+  "ReadableStream",
+  "Storage"
 ] }
-serde = "1.0.132"
+serde = { version = "1.0.132", features = ["derive"] }
+serde_json = "1.0.64"
 validator = { version = "0.14.0", features = ["derive"] }
 regex = "1.5"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
+reqwasm = { version = "0.4.0", features = [] }
